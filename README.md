@@ -240,7 +240,7 @@ Because we're using a reference-guided assembly approach in this tutorial, we ne
 FASTA format is a file format designed for DNA or protein sequences.  It looks something like (the first 10 lines of the ``` human_v37_MT.fasta``` file in the ```references``` directory:
 
 ```
-$ head reference/human_g1k_v37_MT.fasta
+$ head reference/human_v37_MT.fasta
 
 >MT
 GATCACAGGTCTATCACCCTATTAACCACTCACGGGAGCTCTCCATGCATTTGGTATTTT
