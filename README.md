@@ -497,8 +497,8 @@ rule prepare_reference:
 
 
 localrule all:
-    input: reference/human_v37_MT.fasta.fai
-    jobid: 0
+	input: reference/human_v37_MT.fasta.fai
+	jobid: 0
 
 Job counts:
 	count	jobs
@@ -794,7 +794,7 @@ While we focus on ``bbduk.sh`` here, I also recommend checking out [Trimmomatic]
 
 #### Mapping reads to the reference genome and processing alignments
 
-Our next step involves mapping our reads to our reference.  We'll use the [bwa mem](http://bio-bwa.sourceforge.net/bwa.shtml) algorithm to do this, as it's among the most popular mappers and works very well mapping reads to a closely related reference.  Other popular mappers include [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), [minimap2](https://github.com/lh3/minimap2), [Novoalign](http://www.novocraft.com/products/novoalign/), and [Stampy](http://www.well.ox.ac.uk/stampy) (Stampy, in particular, for mapping to a very evolutionary diverged reference genome). Note that for RNA seq data you would use different mappers like [Star](https://github.com/alexdobin/STAR) and [hisat2](https://ccb.jhu.edu/software/hisat2/index.shtml), among many others.
+Our next step involves mapping our reads to our reference.  We'll use the [bwa mem](http://bio-bwa.sourceforge.net/bwa.shtml) algorithm to do this, as it's among the most popular mappers and works very well mapping reads to a closely related reference.  Other popular mappers include [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml), [minimap2](https://github.com/lh3/minimap2), [Novoalign](http://www.novocraft.com/products/novoalign/), and [Stampy](https://www.well.ox.ac.uk/research/research-groups/lunter-group/lunter-group/stampy) (Stampy, in particular, for mapping to a very evolutionary diverged reference genome). Note that for RNA seq data you would use different mappers like [Star](https://github.com/alexdobin/STAR) and [hisat2](https://ccb.jhu.edu/software/hisat2/index.shtml), among many others.
 
 The command line for bwa mem is quite straightforward.  From the main directory, we can execute the following command:
 
@@ -824,9 +824,11 @@ Great! We've mapped reads, corrected read pairing, and converted to BAM format! 
 
 ##### Adding read groups
 Read groups are very useful when you're working with multiple samples, sequencing lanes, flowcells, etc.  Importantly for us, it'll help our downstream variant caller label samples correctly and handle potential sequencing batch effects.  [Picard](https://broadinstitute.github.io/picard/command-line-overview.html) is very commonly used to add read groups to bam files, but ```bwa``` also has the ability to add read groups on the fly while mapping.  This latter option will save us time and space, so we'll add read groups to individual ``YRI_NA18498`` with ```bwa``` by adding to our previous command:
-  ```
-  $ bwa mem -M -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498\tLB:YRI_NA18498\tPU:YRI_NA18498\tPL:Illumina' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz | samtools fixmate -O bam - bams/YRI_NA18498.bam
-  ```
+
+```
+$ bwa mem -M -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498\tLB:YRI_NA18498\tPU:YRI_NA18498\tPL:Illumina' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz | samtools fixmate -O bam - bams/YRI_NA18498.bam
+```
+
 In a perfect world, we'd know more about our sample and could use these tags more appropriately. For now we're including them as placeholders that you can fill in for your future pipelines. ID is the name of a read group (containing a unique combination of the following tags).  SM is the sample name.  LB is the sequencing library. PU is the flowcell barcode.  PL is the sequencing technology.  A number of other options exist (see the [@RG section of the SAM/BAM specifications](https://samtools.github.io/hts-specs/SAMv1.pdf) for more information).
 
 *Note that the fastq files we're using today actually contain reads from multiple lanes, etc., as we randomly grabbed them from high-coverage 1000 genomes bam files.  But for simplicity's sake in this tutorial, we'll ignore that.*
@@ -848,9 +850,10 @@ Notice the new ``@RG`` line (2nd line) that gives the read group ID (``ID``) and
 ##### Sorting bam files
 
 Sorting doesn't require too much explanation.  Most genomic datasets are huge, so it's inefficient to move along unsorted bam files (we need access to all reads covering a given base for variant calling, for example).  ```samtools sort ``` is widely used, and that's what we'll employ here.  Like our previous tools, it handles streaming input, so we can simply add to our previous command to save space:
-  ```
-  $ bwa mem -M -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498\tLB:YRI_NA18498\tPU:YRI_NA18498\tPL:Illumina' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz | samtools fixmate -O bam - - | samtools sort -O bam -o bams/YRI_NA18498.sorted.bam -
-  ```
+
+```
+$ bwa mem -M -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498\tLB:YRI_NA18498\tPU:YRI_NA18498\tPL:Illumina' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz | samtools fixmate -O bam - - | samtools sort -O bam -o bams/YRI_NA18498.sorted.bam -
+```
 
 Let's take a quick look at our new, sorted BAM using ``samtools view`` again.
 
@@ -864,10 +867,11 @@ $ samtools view -h bams/YRI_NA18498.sorted.bam | head -n 5
 SRR027523.7329778	353	MT	1	60	44H32M	=	83	154	GATCACAGGTCTATCACCCTATTAACCACTCA	AB>@DADB@@ACAA@D@@@BAA;AB@:B>@=NM:i:0	MD:Z:32	MC:Z:72M	AS:i:32	XS:i:0	RG:Z:YRI_NA18498	SA:Z:MT,16526,+,44M32S,60,0;
 ```
 
-You can see that there is one major change to the header.  There is a @HD line in the header indicating that the file is sorted in coordinate order ("SO:coordinate"),
+You can see that there is one major change to the header.  There is a @HD line in the header indicating that the file is sorted in coordinate order ("SO:coordinate").
 
 ##### Indexing
 Again, BAM files can get pretty big and they're compressed, so we need to index them for other tools to use them. Here's a simple command for indexing our bam (from our main directory):
+
 ```
 $ samtools index bams/YRI_NA18498.sorted.bam
 ```
@@ -1103,9 +1107,10 @@ Using ``picard`` we can mark duplicates with the following command:
 ```
 $ picard -Xmx1g MarkDuplicates I=bams/PUR_HG00640.human_v37_MT.sorted.bam O=bams/PUR_HG00640.human_v37_MT.sorted.mkdup.bam M=stats/PUR_HG00640.human_v37_MT.picard_mkdup_metrics.txt
 ```
+
 This will flag, but not remove, duplicates in our bam.
 
-A quick note here.  If the same sample library is sequenced across multiple lanes, you'll want to identify and mark/remove duplicates AFTER merging the bam files from all of the lanes. We're not merging today, however.
+A quick note here.  If the same sample library is sequenced across multiple lanes, you'll want to identify and mark/remove duplicates AFTER merging the bam files from all of the lanes. We're not merging today, so that won't affect us, but you can [learn more about merging here](http://www.htslib.org/doc/samtools-merge.html).
 
 Remember that we have to index these BAM files as well. After adding these two steps (marking duplicates and indexing) to the Snakefile, it will look like:
 
