@@ -1372,15 +1372,7 @@ pairs on different chromosomes:	0
 
 As you can see, it gives us a lot of information about number of reads, mapping, pairing, etc.  A quick glance shows us that our mapping was quite successful (9322 out of 9376 reads mapped).  We also had very few PCR duplicates (77 reads - note that this can be calculated because we flagged, but didn't remove duplicates), but this is probably because we randomly sampled read pairs to create our FASTQ files.
 
-We can also get some additional statistics and helpful summary plots and figures using ``qualimap``:
-
-```
-$ qualimap bamqc -bam bams/CEU_NA06986.human_v37_MT.sorted.mkdup.bam -nt 1 -outdir stats/qualimap/human_v37_MT/CEU_NA06986/
-```
-
-This command writes a number of files, but we're interested in the one ending in ``.html``, which we can open up in a browser.
-
-We can now add these steps (along with a step for Qualimap to summarize from all samples together) to the Snakefile. After doing so, our Snakefile will look like:
+We can now add these steps to the Snakefile. After doing so, our Snakefile will look like:
 
 ```
 ceu = [
@@ -1437,9 +1429,6 @@ rule all:
 		expand(
 			"stats/{sample}.{assembly}.sorted.mkdup.bam.stats",
 			sample=all_samples,
-			assembly=assemblies),
-		expand(
-			"stats/qualimap/{assembly}/multisampleBamQcReport.html",
 			assembly=assemblies)
 
 rule prepare_reference:
@@ -1595,60 +1584,16 @@ rule bam_stats:
 	shell:
 		"{params.samtools} stats {input.bam} | grep ^SN | cut -f 2- > {output}"
 
-rule qualimap_per_sample:
-	input:
-		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
-		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
-	output:
-		"stats/qualimap/{assembly}/{sample}"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/{sample}/"
-	shell:
-		"{params.qualimap} bamqc "
-		"-bam {input.bam} -nt 1 "
-		"-outdir {params.out_dir}"
-
-
-rule create_qualimap_list:
-	input:
-		lambda wildcards: expand(
-			"stats/qualimap/{genome}/{sample}",
-			sample=all_samples,
-			genome=wildcards.assembly)
-	output:
-		"stats/qualimap/{assembly}/qualimap.list"
-	run:
-		shell("echo -n > {output}")
-		for i in input:
-			sm = os.path.basename(i)
-			shell("echo '{}\t{}' >> {{output}}".format(sm, i))
-
-rule qualimap_multibamqc:
-	input:
-		"stats/qualimap/{assembly}/qualimap.list"
-	output:
-		"stats/qualimap/{assembly}/multisampleBamQcReport.html"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/"
-	shell:
-		"{params.qualimap} multi-bamqc -d {input} -outdir {params.out_dir}"
-
 ```
-
-This will take a couple minutes to run. When it's done, take a look at the Qualimap file summarizing all of the samples, ``stats/qualimap/human_v37_MT/multisampleBamQcReport.html``, which you can open in your browser.
 
 ** Further questions for thought/discussion **
 1. We started with 10,000 reads per sample (5,000 forward and 5,000 reverse)--why are there fewer reads in each of the BAM files?
-
-2. Is coverage uniform across the mitochondrial genome? How does this affect our target depth of coverage for sequencing?
 
 #### Variant calling
 
 Now that we've trimmed and mapped our reads, labeled and sorted reads in our BAM files, removed duplicates, and assessed our mapping success, it's finally time to call variants. By "call variants", I mean statistically infer genotypes.
 
-There are a few tools that do this (see Alternative Programs at the end of this section), but today we're going to use the [Genome Analysis Toolkit's (GATK's) HaplotypeCaller](https://software.broadinstitute.org/gatk/documentation/tooldocs/4.0.7.0/org_broadinstitute_hellbender_tools_walkers_haplotypecaller_HaplotypeCaller.php). This involves a three-step process of first preliminarily genotyping each sample individually, then combining the all of these preliminary genotypes into a single file, and finally jointly genotyping across all samples. This has a few benefits. 1) It scales well across many, many samples. 2) Joint genotyping can increase the power to identify difficult alleles. For example, if a certain allele is present in a small fraction of reads for individual 1, it might be ignored if individual 1 is called by itself. However, if that allele is present in individual 3, it can increase the support for that allele in individual 1. This can be extremely important for low-coverage sequencing. 3) GATK's HaplotypeCaller locally reassembles regions of the genome. This isn't unique to HaplotypeCaller and it's benefits are beyond the scope of this tutorial, but this helps with things like small insertions and deletions that can cause reads to locally mismap.
+There are a few tools that do this (see Alternative Programs at the end of this section), but today we're going to use the [Genome Analysis Toolkit's (GATK's) HaplotypeCaller](https://gatk.broadinstitute.org/hc/en-us/articles/5358864757787-HaplotypeCaller). This involves a three-step process of first preliminarily genotyping each sample individually, then combining the all of these preliminary genotypes into a single file, and finally jointly genotyping across all samples. This has a few benefits. 1) It scales well across many, many samples. 2) Joint genotyping can increase the power to identify difficult alleles. For example, if a certain allele is present in a small fraction of reads for individual 1, it might be ignored if individual 1 is called by itself. However, if that allele is present in individual 3, it can increase the support for that allele in individual 1. This can be extremely important for low-coverage sequencing. 3) GATK's HaplotypeCaller locally reassembles regions of the genome. This isn't unique to HaplotypeCaller and it's benefits are beyond the scope of this tutorial, but this helps with things like small insertions and deletions that can cause reads to locally mismap.
 
 For step one of this process, we use HaplotypeCaller to preliminarily genotype each sample separately:
 
@@ -1657,7 +1602,7 @@ $ gatk --java-options "-Xmx1g" HaplotypeCaller -R reference/human_v37_MT.fasta -
 ```
 Note the option ``-ERC GVCF``, which outputs confidence that an invariant site (homozygous and matches reference genome) is a reference allele. This is important for the joint genotyping.
 
-Our next step is run once the previous step is finished for all samples. It uses GATK's CombineGVCFs to combine the GVCF files from all samples. You'll see what this command looks like in the Snakefile in a minute.
+Our next step is run once the previous step is finished for all samples. It uses GATK's CombineGVCFs to combine the GVCF files from all samples. You'll see what this command looks like in the Snakefile in a minute. GATK has a new tool GenomicsDBImport, which is *much* faster for a large number of samples or genomics with many scaffolds. CombineGVCFs works well for our purposes, so we'll stick with it today, but definitely look into GenomicsDBImport for your own data.
 
 The final step involves jointly genotyping that combined GVCF file. For this we use GATK's GenotypeGVCFs tool, and again, you'll see what the command looks like in the Snakefile.
 
@@ -1699,7 +1644,6 @@ fastqc_path = "fastqc"
 gatk_path = "gatk"
 multiqc_path = "multiqc"
 picard_path = "picard"
-qualimap_path = "qualimap"
 
 rule all:
 	input:
@@ -1719,9 +1663,6 @@ rule all:
 		expand(
 			"stats/{sample}.{assembly}.sorted.mkdup.bam.stats",
 			sample=all_samples,
-			assembly=assemblies),
-		expand(
-			"stats/qualimap/{assembly}/multisampleBamQcReport.html",
 			assembly=assemblies),
 		expand(
 			"genotyped_vcfs/{assembly}.gatk.called.raw.vcf.gz",
@@ -1880,46 +1821,6 @@ rule bam_stats:
 	shell:
 		"{params.samtools} stats {input.bam} | grep ^SN | cut -f 2- > {output}"
 
-rule qualimap_per_sample:
-	input:
-		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
-		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
-	output:
-		"stats/qualimap/{assembly}/{sample}"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/{sample}/"
-	shell:
-		"{params.qualimap} bamqc "
-		"-bam {input.bam} -nt 1 "
-		"-outdir {params.out_dir}"
-
-
-rule create_qualimap_list:
-	input:
-		lambda wildcards: expand(
-			"stats/qualimap/{genome}/{sample}",
-			sample=all_samples,
-			genome=wildcards.assembly)
-	output:
-		"stats/qualimap/{assembly}/qualimap.list"
-	run:
-		shell("echo -n > {output}")
-		for i in input:
-			sm = os.path.basename(i)
-			shell("echo '{}\t{}' >> {{output}}".format(sm, i))
-
-rule qualimap_multibamqc:
-	input:
-		"stats/qualimap/{assembly}/qualimap.list"
-	output:
-		"stats/qualimap/{assembly}/multisampleBamQcReport.html"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/"
-	shell:
-		"{params.qualimap} multi-bamqc -d {input} -outdir {params.out_dir}"
-
 rule gatk_gvcf:
 	input:
 		ref = "reference/{assembly}.fasta",
@@ -1978,7 +1879,7 @@ You can run the remaining steps of the pipeline by again typing:
 $ snakemake
 ```
 
-The final output file, ``genotyped_vcfs/human_v37_MT.gatk.called.raw.vcf.gz`` is an unfiltered VCF file containing only variant sites. Viewing, understanding, and filtering this file is the subject of the next session, taught by Maria Nieves Colon.
+The final output file, ``genotyped_vcfs/human_v37_MT.gatk.called.raw.vcf.gz`` is an unfiltered VCF file containing only variant sites. Viewing, understanding, and filtering VCF files is outside of the scope of today's tutorial, but these would be the next step in your pipeline.
 
 ** Further questions for thought/discussion **
 1. Are there times that it might be inappropriate to jointly genotype samples?
