@@ -11,6 +11,7 @@ This session has two main goals: (1) learn how to build a reproducible bioinform
 - Setting up
 - Reference genomes and the FASTA format
 - Sequencing reads and the FASTQ format
+- Batch effects
 - Building our pipeline
 	- Preparing our reference genome
 	- Inspecting read quality
@@ -335,7 +336,7 @@ In both cases, we see that all four reads come from the same tile. This is becau
 
 ## Batch effects
 
-
+While this tutorial won't cover batch effects, it's worth being aware of them as they're pervasive in sequencing data (both data you generate and public data you download) and can substantially affect downstream analyses if not handled properly. From [Leek et al. 2010](https://www.nature.com/articles/nrg2825): "Batch effects are sub-groups of measurements that have qualitatively different behaviour across conditions and are unrelated to the biological or scientific variables in a study. For example, batch effects may occur if a subset of experiments was run on Monday and another set on Tuesday, if two technicians were responsible for different subsets of the experiments or if two different lots of reagents, chips or instruments were used." It's worth researching them in more detail, but a quick piece of advice that goes a long way is: ensure that your biological variables do not correlate with your technical variables. For example, don't sequence all of the males in your study on one sequencing lane and all females on another. Similarly, if you're stuyding two populations, don't sequence all of population 1 at one institution and all of population 2 at another.
 
 ## Building our pipeline
 
