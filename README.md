@@ -2208,3 +2208,30 @@ Note the *only* difference is the ``assemblies`` variable declaration near the t
 This is true for adding samples, running multiple mappers (e.g., a ``bwa`` vs. ``minimap2`` comparision), etc. As long as you name things and declare variables carefully, these type of extensions are very easy.
 
 In addition, I declare tool names at the top of the file in case I or someone else has to use a different version of a tool (e.g., a local version of ``samtools`` that you downloaded). In this example, we only have to change ``samtools_path`` once at the top of the file, rather than in every single rule that uses ``samtools``.
+
+What if we need to use a tool for a rule that's incompatible with other tools in the environment? To solve this problem, Snakemake introduced the Conda directive, which allows you to create environments for specific rules. To see this in practice, let's add a rule to calculate sequencing depth of coverage from our BAM files. A great tool for this is ``mosdepth``. If we want to create an environment specific to ``mosdepth``, we first create a file in YAML format with the packages we need conda to install:
+
+```
+channels:
+	- bioconda
+dependencies:
+	- mosdepth
+```
+
+Let's save that to a file in the main directory called ``mosdepth_env.yaml``. We can then create a rule that looks like this:
+
+```
+rule mosdepth_total:
+	input:
+		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
+		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
+	output:
+		"mosdepth_results/{sample}.{assembly}.summary.txt"
+	params:
+		mosdepth = mosdepth_path,
+		prefix = "mosdepth_results/{sample}.{assembly}"
+	conda:
+		"mosdepth_env.yaml"
+	shell:
+		"{params.mosdepth} --fast-mode -F 1024 --mapq 30 {params.prefix} {input.bam}"
+```
