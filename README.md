@@ -1,10 +1,8 @@
-# AGAR 2018 Session 2: *The basics of read mapping and variant calling*
+# AGAR 2022 Session 2: *Building a reproducible pipeline for read mapping and variant calling*
 
-*Updated 02-15-2021 to reflect changes in conda channel order suggested by the Bioconda team (priority of conda-forge > bioconda > defaults). Only lines 184-194 have changed. All other content remains exactly as presented at the 2018 workshop.
+*Content by Tim Webster (University of Utah), 2022. Available under a GNU General Public v3 license. Much of this content has been updated and adapted from a previous version of this activity (also by Webster) [that you can find here](https://github.com/thw17/AGAR_2018_Intro_Genome_Assembly).*
 
-*Content by Tim Webster (Arizona State University and University of Utah), 2018. Available under a GNU General Public v3 license. Much of this content has been updated and adapted from a previous version of this activity (also by Webster) [that you can find here](https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018).*
-
-This session features a hands on introduction to the basics of read mapping, BAM file processing, and variant calling. We will also discuss various file types that you'll encounter along the way: FASTA, FASTQ, SAM/BAM, BED, and VCF.
+This session has two main goals: (1) learn how to build a reproducible bioinformatics pipeline and (2) give a hands on introduction to the basics of read mapping, BAM file processing, and variant calling. We will also discuss various file types that you'll encounter along the way: FASTA, FASTQ, SAM/BAM, BED, and VCF.
 
 **Table of Contents**
 
@@ -27,7 +25,7 @@ This session features a hands on introduction to the basics of read mapping, BAM
 
 ## Reference-based vs. *de novo* assembly
 
-There are, in general, two main flavors of genome assembly. *De novo* assembly involves taking raw sequencing reads and piecing them together into a genome assembly using only the information contained in the reads and their metadata (e.g., the sequences themselves, insert sizes, etc.). While a number of de novo assemblers exist and there's a great deal of work being done to improve algorithms, lengthen sequencing reads, develop methods to increase insert sizes, etc., *de novo* assembly remains challenging, expensive (usually 100x or greater sequencing depth), and computationally demanding.
+There are, in general, two main flavors of genome assembly. *De novo* assembly involves taking raw sequencing reads and piecing them together into a genome assembly using only the information contained in the reads and their metadata (e.g., the sequences themselves, insert sizes, etc.). While a number of *de novo* assemblers exist and there's a great deal of work being done to improve algorithms, lengthen sequencing reads, develop methods to increase insert sizes, etc., *de novo* assembly remains challenging, expensive, and computationally demanding.
 
 Fortunately, if we have a reference genome available to us, we can make do with much less sequencing (often 30x coverage or less; low coverage - 1-5x - is not uncommon for some purposes), and use tools that require far less memory and storage. We can do this by mapping our sequencing reads to said reference genome.
 
@@ -42,7 +40,7 @@ In this tutorial, we'll walk through the basics of reference-guided genome assem
 
 ## Brief discussion of reproducibility and version control
 
-The fields of genomics and bioinformatics have typically embraced open source data and code, and reproducibility. While not all analyses are reproducible, these (and more) fields are continuing to move in this direction, with more and more journals requiring data and code to be shared.
+The fields of genomics and bioinformatics have typically embraced reproducibility and open source data and code. While not all published analyses are reproducible yet, these (and more) fields are continuing to move in this direction, with more and more journals requiring data and code to be shared.
 
 With that in mind, it's important that any bioinformatic pipeline we put together can be shared in a way that allows someone to exactly (or as close as possible) reproduce our analyses. Because our time in this session is limited, a detailed discussion of reproducibility is beyond the scope of this tutorial. However, we will be building a reproducible, version controlled pipeline as we go using Anaconda/Bioconda (software manager) and Snakemake.
 
@@ -54,7 +52,7 @@ With that in mind, it's important that any bioinformatic pipeline we put togethe
 
 We'll be writing the pipeline itself using [Snakemake](https://snakemake.readthedocs.io/en/stable/), a workflow management system based on GNU Make, but written in Python and with added features that are specifically designed to aid in bioinformatic analyses. The [documentation](https://snakemake.readthedocs.io/en/stable/) is great, and they have [an excellent tutorial](https://snakemake.readthedocs.io/en/stable/tutorial/tutorial.html) that I highly recommend working through.
 
-As I mentioned above, we won't be giving a Conda and/or Snakemake tutorial, but we will be using both. I explain our Conda set up below in the section **Setting up**. I'll very briefly describe our Snakemake setup here.
+As I mentioned above, this isn't primarily a Conda and/or Snakemake tutorial, but we will be using both. I explain our Conda set up below in the section **Setting up**. I'll very briefly describe our Snakemake setup here.
 
 By default, Snakemake will read through your "Snakefile" (main file containing Snakemake code) until it hits the first "rule". This becomes the target rule for the entire pipeline. Snakemake will read the files required as input for this target rule, and then go through the output of the rest of the rules until it finds the rules that can create the input for this target rule. It then finds the rules whose output is the input of these rules, and so on until it has the complete path of rules (from the beginning) required to create the input for the target rule.
 
@@ -142,7 +140,7 @@ Finally, to see what Snakemake is planning to run, you can run the command:
 
 which will just print what Snakemake is planning to do, without actually running the commands (i.e., a dry-run).
 
-That's it for our Snakemake crash course for today. Obviously, we haven't begun to scratch the surface of Snakemake's capabilities or built an understanding of how it works. For this, I highly, highly recommend checking out the Snakemake [tutorial](https://snakemake.readthedocs.io/en/stable/tutorial/tutorial.html) and [documentation](https://snakemake.readthedocs.io/en/stable/).
+That's it for our Snakemake crash course and for the rest of the tutorial you'll become more familiar with it as you build your pipeline. Obviously, we haven't begun to scratch the surface of Snakemake's capabilities or built an understanding of how it works. For this, I highly, highly recommend checking out the Snakemake [tutorial](https://snakemake.readthedocs.io/en/stable/tutorial/tutorial.html) and [documentation](https://snakemake.readthedocs.io/en/stable/).
 
 ** Further questions for though/discussion **
 1. What are benefits of reproducibility for you and the community?
@@ -155,8 +153,7 @@ For today's tutorial, you'll need this repository and Conda.
 
 #### A quick note on notation
 
-In this tutorial, all commands entered will follow a ```$ ```, while any associated output will follow this line in the
-same box.  Do not include the ```$``` in your command, rather enter the command that follows.
+For the rest of this tutorial, all commands entered will follow a ```$ ```, while any associated output will follow this line in the same box. Do not include the ```$``` in your command, rather enter the command that follows.
 
 #### Getting the repo
 We'll use ```git``` to clone the repository (repo) for this tutorial onto your computer.  You can check to see if you have git installed by typing the command ```$ git```.  You should see some usage information.  If not, see [here](https://git-scm.com/) for information about installing.
@@ -164,68 +161,80 @@ We'll use ```git``` to clone the repository (repo) for this tutorial onto your c
 Once git is installed, move to the directory on your computer or cluster where you'd like to work and type the command:
 
 ```
-$ git clone https://github.com/thw17/AGAR_2018_Intro_Genome_Assembly
+$ git clone https://github.com/thw17/AGAR2022_Reproducible_Genome_Assembly
 ```
-This should create a directory called AGAR_2018_Intro_Genome_Assembly containing all of the contents of this repo.
+This should create a directory called AGAR2022_Reproducible_Genome_Assembly containing all of the contents of this repo.
 
-Alternatively, if git isn't working for you, you can directly download the zipped directory via the green "Clone or download" button on [the repository's website](https://github.com/thw17/AGAR_2018_Intro_Genome_Assembly).
+Alternatively, if git isn't working for you, you can directly download the zipped directory via the green "Clone or download" button on [the repository's website](https://github.com/thw17/AGAR2022_Reproducible_Genome_Assembly).
 
 Be sure to move to this directory for all subsequent commands:
 
 ```
-$ cd AGAR_2018_Intro_Genome_Assembly
+$ cd AGAR2022_Reproducible_Genome_Assembly
 ```
 
 #### Setting up Anaconda
 We're going to use [Conda](https://conda.io/docs/), described above, to install and manage software. To download Conda and set up our environment, use the following steps:
 
-* First, install Python 3.6 version of Miniconda [available here](https://conda.io/miniconda.html), *OR* Anaconda [available here](https://www.continuum.io/downloads). Miniconda installs the conda framework without all of the Python packages installed with Anaconda (numpy, scipy, matplotlib, etc.). All of these packages can be easily installed later (via ``conda install <package name>``), so the decision is up to you. During installation, be sure to allow Miniconda/Anaconda to append to your .bashrc or .bash_profile (this will add it and all programs it installs to your PATH). *This means you'll have to pay attention to all prompts during installation!!*  If installation goes well, the command ``` which python ``` should result in something like ``/Users/<yourusername>/miniconda/bin/python `` or ``/home/<yourusername>/miniconda/bin/python ``.
+* First, install the latest Python version of Miniconda, which is 3.9.7 at the time of writing [available here](https://docs.conda.io/en/latest/miniconda.html), *OR* Anaconda [available here](https://www.continuum.io/downloads). Miniconda installs the conda framework without all of the Python packages installed with Anaconda (numpy, scipy, matplotlib, etc.). All of these packages can be easily installed later (via ``conda install <package name>``), so the decision is up to you. For this tutorial, I'd recommend installing Miniconda, as it's much faster to download and install. During installation, be sure to allow Miniconda/Anaconda to append to your .bashrc or .bash_profile (this will add it and all programs it installs to your PATH). *This means you'll have to pay attention to all prompts during installation!!*  If installation goes well, the command ``` which python ``` should result in something like ``/Users/<yourusername>/miniconda/bin/python `` or ``/home/<yourusername>/miniconda/bin/python ``.
+
+While we won't be using these installers today, two other options have emerged that install Conda with various pre-configurations: Miniforge and Mambaforge, both available [here](https://github.com/conda-forge/miniforge).
 
 * Add Bioconda channels to conda with the following commands in this order:
 
-  ```
-  $ conda config --add channels defaults
+```
+$ conda config --add channels defaults
 
-  $ conda config --add channels bioconda
-  
-   $ conda config --add channels conda-forge
-  ```
+$ conda config --add channels bioconda
 
-	This sets the channel ``conda-forge`` as our highest priority, followed by ``bioconda``, and then ``defaults`` at the lowest priority. You can confirm this information (and more) with the command:
+$ conda config --add channels conda-forge
+```
 
-  ```
-  $ conda info
-  ```
+This sets the channel ``conda-forge`` as our highest priority, followed by ``bioconda``, and then ``defaults`` at the lowest priority. You can confirm this information (and more) with the command:
 
-	And you can manually add, delete, and adjust channels in the file ``~/.condarc``. This is a hidden file (you can tell because it begins with a single period) located in your home directory (denoted by the ``~/``). However, I don't recommend editing this file until you're familiar with both conda and UNIX/LINUX environments.
+```
+$ conda info
+```
+
+And you can manually add, delete, and adjust channels in the file ``~/.condarc``. This is a hidden file (you can tell because it begins with a single period) located in your home directory (denoted by the ``~/``). However, I don't recommend editing this file until you're familiar with both conda and UNIX/LINUX environments.
 
 * Create the environment we'll be working in and install required packages with the command:
 
-  ```
-  $ conda create -n agar2018 python=3.6 snakemake samtools bwa bioawk fastqc multiqc bbmap qualimap gatk4 vcftools picard
-  ```
+```
+$ conda create -n agar2022 snakemake samtools bwa bioawk fastqc multiqc bbmap gatk4 vcftools picard
+```
 
-	This will create a working environment called agar2018 containing python 3.6 (python 3 is required for snakemake) and all of the tools listed in the command.  You can see the full list of programs available through Bioconda [listed here](https://bioconda.github.io/) and the full list of python packages available through Anaconda [listed here](https://docs.continuum.io/anaconda/pkg-docs). Note that there are many other channels to check as well (particularly, conda-forge).
+This will create a working environment called agar2022 all of the tools listed in the command.  You can see the full list of programs available through Bioconda [listed here](https://bioconda.github.io/), conda-forge [listed here](https://conda-forge.org/feedstock-outputs/), and Anaconda [listed here](https://docs.continuum.io/anaconda/pkg-docs). Note that there are other channels to check as well.
 
 If you want to load our new environment, you can do so with the command:
+
 ```
-$ source activate agar2018
+$ source activate agar2022
 ```
+
 and leave the environment with the command:
+
 ```
 $ source deactivate
 ```
 
-If you're in your environment, you can easily add additional programs (like we did for samblaster) and packages with the command:
+If you're in your environment, you can easily add additional programs and packages with the command:
 ```
 $ conda install <program/package name>
 ```
 
-For example, if we also want to take a look at ``Bowtie2``, another read mapper (we'll use ``bwa`` today), we can easily add it by entering our environment ``` $ source activate agar2018 ``` and entering the command ```$ conda install bowtie2 ```
+For example, if we also want to take a look at ``Bowtie2``, another read mapper (we'll use ``bwa`` today), we can easily add it by entering our environment if we haven't already ``` $ source activate agar2022 ``` and typing the command ```$ conda install bowtie2 ```
+
+**Further questions for thought/discussion**
+
+1. Why is it beneficial to create a new Conda environment for every project?
+
+2. Many computing clusters will install software that you can load with a command like
+`` $ module load bwa ``. Are there any downsides to using software this way?
 
 ## Reference genomes and the FASTA format
 
-Because we're using a reference-guided assembly approach in this tutorial, we need a reference genome to which we're going to map reads. In a perfect world, this assembly is of a high-quality, has a good set of annotations available (e.g., genes, functional elements, repeats, etc.), and is relatively closely related to the species that you're studying.  There are, for example, numerous reference genomes hosted at the [UCSC Genome Browser](http://hgdownload.soe.ucsc.edu/downloads.html) and [Ensembl](http://www.ensembl.org/info/data/ftp/index.html).  Accessing a reference genome probably won't be a problem if you're working with a model organism, but in other situations you'll have to consider whether a good assembly is available for a taxon evolutionarily close enough for your purposes (if not, you might need to think about assembling a reference for your project _de novo_).  For today, we're working with example sequencing reads from human samples and we have the human reference genome available, so we'll be fine.
+Because we're using a reference-guided assembly approach in this tutorial, we need a reference genome to which we're going to map reads. In a perfect world, this assembly is of a high-quality, has a good set of annotations available (e.g., genes, functional elements, repeats, etc.), and is relatively closely related to the species that you're studying.  There are, for example, numerous reference genomes hosted at the [UCSC Genome Browser](http://hgdownload.soe.ucsc.edu/downloads.html), [NCBI](https://www.ncbi.nlm.nih.gov/assembly/), and [Ensembl](http://www.ensembl.org/info/data/ftp/index.html).  Accessing a reference genome probably won't be a problem if you're working with a model organism, but in other situations you'll have to consider whether a good assembly is available for a taxon evolutionarily close enough for your purposes (if not, you might need to think about assembling a reference for your project _de novo_).  For today, we're working with example sequencing reads from human samples and we have the human reference genome available, so we'll be fine.
 
 FASTA format is a file format designed for DNA or protein sequences.  It looks something like (the first 10 lines of the ``` human_v37_MT.fasta``` file in the ```references``` directory:
 
@@ -278,13 +287,13 @@ In these files, each sequencing read is listed in a series of four lines:
 * a comment line (here, the comment lines only contain +)
 * a quality score line (ASCII characters)
 
-The sequence identifier can contain a lot of information (see [Illumina's description for more information](http://support.illumina.com/content/dam/illumina-support/help/BaseSpaceHelp_v2/Content/Vault/Informatics/Sequencing_Analysis/BS/swSEQ_mBS_FASTQFiles.htm)), the combination of which will identify individual reads uniquely.  In this example, IDs are organized as: instrumentID:instrument_run:flowcellID:lane:tile:x_position:y_position.
+The sequence identifier can contain a lot of information (see [Illumina's description for more information](https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm)), the combination of which will identify individual reads uniquely.  In this example, IDs are organized as: instrumentID:instrument_run:flowcellID:lane:tile:x_position:y_position.
 
 The sequence line here is 76 bases long and contains the nucleotide sequence corresponding to each read.
 
 The comment line usually either is a lone + or a + and then the sequence identifier repeated.  You'll generally ignore this line, but it's good to be aware of what's on it in case you're using basic shell command-line tools to do things like count.  For example, if the sequence identifier is repeated and you're counting the number of times a tile number is present in a file using a command like ```grep```, your count will be double the actual number of reads coming from that tile.
 
-The quality score line contains an ASCII character for every nucleotide in the sequence (i.e., it'll be 250 characters long for a 250 base read, 75 characters long for a 75 base read, etc.).  Each ASCII character can be converted into a integer PHRED quality score, ranging from 0 to 93, that indicates the probability that a particular base call is incorrect.  [See more details here - our Illumina scores use the 33 offset](http://www.drive5.com/usearch/manual/quality_score.html).
+The quality score line contains an ASCII character for every nucleotide in the sequence (i.e., it'll be 250 characters long for a 250 base read, 75 characters long for a 75 base read, etc.).  Each ASCII character can be converted into a integer PHRED quality score, ranging from 0 to 93, that indicates the probability that a particular base call is incorrect.  [See more details here - our Illumina scores use the BASE=33 offset](http://www.drive5.com/usearch/manual/quality_score.html).
 
 Like FASTA files, we can also use ```bioawk``` to parse and analyze fastq files.  For example we can count all of the reads in each file:
 
@@ -323,6 +332,10 @@ In both cases, we see that all four reads come from the same tile. This is becau
 2. Bioinformatic programs generally require paired-end reads to be two files (forward read file and reverse read file), and to have reads in the two files sorted in the same order. Why is this organization important?
 
 3. Can you tell what sequencing strategy and data type is included in a raw fastq file (e.g. DNA, RNA, whole genome, exome, RADseq, etc.)?
+
+## Batch effects
+
+
 
 ## Building our pipeline
 
@@ -380,7 +393,7 @@ $ samtools dict -o reference/human_v37_MT.dict reference/human_v37_MT.fasta
 $ bwa index reference/human_v37_MT.fasta
 ```
 
-This will be quick and require very little memory on our small reference, but the bwa indexing in particular can take much longer on a full, human-sized reference and require ~4-6 GB of memory.
+This will be quick and require very little memory on our small reference, but the ``bwa`` indexing in particular can take much longer on a full, human-sized reference and require ~4-6 GB of memory.
 
 And that's it.  All of our reference files and indices are now contained in our reference directory. Let's take a quick look at our ``.fai`` index (created by the first command with ``samtools faidx``) with ``cat``:
 
@@ -452,6 +465,7 @@ rule prepare_reference:
 		shell(
 			"{params.bwa} index {input.ref}")
 ```
+
 Note that the variable ``assemblies`` in the input of ``rule all`` is the same ``assemblies`` declared above. It's a list of one item, ``"human_v37_MT"``, a string.
 
 Save that file. From the main directory, what happens when we type the command to do a dry run of the pipeline? It should look like this:
