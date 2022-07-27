@@ -1409,7 +1409,6 @@ samtools_path = "samtools"
 fastqc_path = "fastqc"
 multiqc_path = "multiqc"
 picard_path = "picard"
-qualimap_path = "qualimap"
 
 rule all:
 	input:
@@ -1976,7 +1975,6 @@ fastqc_path = "fastqc"
 gatk_path = "gatk"
 multiqc_path = "multiqc"
 picard_path = "picard"
-qualimap_path = "qualimap"
 
 rule all:
 	input:
@@ -1996,9 +1994,6 @@ rule all:
 		expand(
 			"stats/{sample}.{assembly}.sorted.mkdup.bam.stats",
 			sample=all_samples,
-			assembly=assemblies),
-		expand(
-			"stats/qualimap/{assembly}/multisampleBamQcReport.html",
 			assembly=assemblies),
 		expand(
 			"genotyped_vcfs/{assembly}.gatk.called.rawvariants.vcf.gz",
@@ -2156,46 +2151,6 @@ rule bam_stats:
 		samtools = samtools_path
 	shell:
 		"{params.samtools} stats {input.bam} | grep ^SN | cut -f 2- > {output}"
-
-rule qualimap_per_sample:
-	input:
-		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
-		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
-	output:
-		"stats/qualimap/{assembly}/{sample}"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/{sample}/"
-	shell:
-		"{params.qualimap} bamqc "
-		"-bam {input.bam} -nt 1 "
-		"-outdir {params.out_dir}"
-
-
-rule create_qualimap_list:
-	input:
-		lambda wildcards: expand(
-			"stats/qualimap/{genome}/{sample}",
-			sample=all_samples,
-			genome=wildcards.assembly)
-	output:
-		"stats/qualimap/{assembly}/qualimap.list"
-	run:
-		shell("echo -n > {output}")
-		for i in input:
-			sm = os.path.basename(i)
-			shell("echo '{}\t{}' >> {{output}}".format(sm, i))
-
-rule qualimap_multibamqc:
-	input:
-		"stats/qualimap/{assembly}/qualimap.list"
-	output:
-		"stats/qualimap/{assembly}/multisampleBamQcReport.html"
-	params:
-		qualimap = qualimap_path,
-		out_dir = "stats/qualimap/{assembly}/"
-	shell:
-		"{params.qualimap} multi-bamqc -d {input} -outdir {params.out_dir}"
 
 rule gatk_gvcf:
 	input:
